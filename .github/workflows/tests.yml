@@ -17,11 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      UI_BASE_URL: ${{ vars.UI_BASE_URL }}
-      API_BASE_URL: ${{ vars.API_BASE_URL }}
-      SAUCE_STANDARD_USER: ${{ secrets.SAUCE_STANDARD_USER }}
-      SAUCE_PROBLEM_USER: ${{ secrets.SAUCE_PROBLEM_USER }}
-      SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
+      API_BASE_URL: ${{ vars.API_BASE_URL || 'https://jsonplaceholder.typicode.com' }}
+      SAUCE_STANDARD_USER: ${{ secrets.SAUCE_STANDARD_USER || 'standard_user' }}
+      SAUCE_PROBLEM_USER: ${{ secrets.SAUCE_PROBLEM_USER || 'problem_user' }}
+      SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD || 'secret_sauce' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,6 +42,8 @@ jobs:
   postman:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    env:
+      API_BASE_URL: ${{ vars.API_BASE_URL || 'https://jsonplaceholder.typicode.com' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,7 +51,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run test:postman -- --env-var "baseUrl=${{ vars.API_BASE_URL }}" --reporters cli,junit --reporter-junit-export newman/results.xml
+      - run: npm run test:postman -- --env-var "baseUrl=${{ env.API_BASE_URL }}" --reporters cli,junit --reporter-junit-export newman/results.xml
       - name: Upload Newman results
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4

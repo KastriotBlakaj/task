@@ -46,7 +46,8 @@ This opens the HTML report from the last run.
 GitHub Actions runs all tests on every push to `main`, on pull requests, every night, and by hand from the
 Actions tab. The reports are saved with each run.
 
-It needs these settings in the repo, under **Settings → Secrets and variables → Actions**:
+CI uses the public SauceDemo / JSONPlaceholder values from `.env.example` by default.
+Optional overrides live under **Settings → Secrets and variables → Actions**:
 
 - Variables: `UI_BASE_URL`, `API_BASE_URL`
 - Secrets: `SAUCE_STANDARD_USER`, `SAUCE_PROBLEM_USER`, `SAUCE_PASSWORD`
