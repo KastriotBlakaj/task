@@ -1,0 +1,60 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      UI_BASE_URL: ${{ vars.UI_BASE_URL }}
+      API_BASE_URL: ${{ vars.API_BASE_URL }}
+      SAUCE_STANDARD_USER: ${{ secrets.SAUCE_STANDARD_USER }}
+      SAUCE_PROBLEM_USER: ${{ secrets.SAUCE_PROBLEM_USER }}
+      SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+  postman:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:postman -- --env-var "baseUrl=${{ vars.API_BASE_URL }}" --reporters cli,junit --reporter-junit-export newman/results.xml
+      - name: Upload Newman results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-results
+          path: newman/
+          retention-days: 14
